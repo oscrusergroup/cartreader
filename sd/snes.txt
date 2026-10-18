@@ -5483,7 +5483,7 @@ Mohawk & Headphone Jack (USA).sfc
 0B207E7F,9CB3,0CDA9EAA,16,064
 
 Momotarou Dentetsu Happy (Japan).sfc
-0B8D1474,5DD6,3FBA1E71,24,096
+0B8D1474,E28C,D7C9F59E,24,048
 
 Monopoly (Japan).sfc
 42FE51E1,B43C,C1141FB1,08,032
@@ -9599,7 +9599,7 @@ Super Power League 3 (Japan).sfc
 B90696D0,A722,04FED5E1,20,040
 
 Super Power League 4 (Japan).sfc
-C07F099D,0920,4FA7DF0E,02,004
+C07F099D,01AA,82D9EE76,16,032
 
 Super Probotector - Alien Rebels (Europe) (Beta).sfc
 7C09B80A,63B0,FA2B3935,08,032
@@ -10334,10 +10334,10 @@ Tenchi Souzou (Japan).sfc
 3CC7FDF4,27C6,8E6782D1,32,064
 
 Tengai Makyou Zero (Japan) (Shounen Jump no Shou).sfc
-BF8FEF7A,B704,4D204995,40,080
+BF8FEF7A,2EE2,E87008FC,40,080
 
 Tengai Makyou Zero (Japan).sfc
-1E327BD9,B704,ED793884,40,080
+1E327BD9,DE89,F47AEE8D,40,080
 
 Tenryuu Genichirou no Pro Wres Revolution (Japan).sfc
 D5FB8C83,FB89,91563341,16,064
