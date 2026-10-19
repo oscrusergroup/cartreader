@@ -1215,12 +1215,6 @@ boolean checkcart_SNES() {
       romSize = 16;
       numBanks = 64;
     }
-  } else if ((romChips == 245) && (romType == HI)) {
-    romSize = 24;
-    numBanks = 48;
-  } else if ((romChips == 249) && (romType == HI)) {
-    romSize = 40;
-    numBanks = 80;
   } else {
     // Check RomSize
     byte romSizeExp = snesHeader[0xFFD7 - headerStart] - 7;
