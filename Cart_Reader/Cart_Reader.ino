@@ -1907,6 +1907,304 @@ int32_t cal_factor = 0;
 int32_t old_cal = 0;
 int32_t cal_offset = 100;
 
+// Automatic calibration: the frequency counter input (pin 47/T5) is SNES slot pin 43 (A18),
+// the user bridges it with a jumper wire to the EXT clock output on slot pin 1
+#define CLKCAL_EXT 1
+#define CLKCAL_MAX_PPB 1000000L
+#define CLKCAL_PASSES 3
+#define CLKCAL_PASS_SECONDS 5
+#define CLKCAL_FINAL_SECONDS 10
+
+// Clock outputs, all three are known so a wire on the wrong pin can be detected: CIC (CLK2), EXT (CLK0), CPU (CLK1)
+static const uint8_t clkCalPins[] PROGMEM = { 56, 1, 57 };
+static const uint32_t clkCalHz[] PROGMEM = { 3072000UL, 4000000UL, 1000000UL };
+
+static const char clkCalModeItem1[] PROGMEM = "Automatic";
+static const char clkCalModeItem2[] PROGMEM = "Manual";
+static const char* const menuOptionsClkCalMode[] PROGMEM = { clkCalModeItem1, clkCalModeItem2 };
+
+static const char clkCalMenuItem1[] PROGMEM = "Save";
+static const char clkCalMenuItem2[] PROGMEM = "Run again";
+static const char clkCalMenuItem3[] PROGMEM = "Fine-tune manually";
+static const char clkCalMenuItem4[] PROGMEM = "Discard";
+static const char* const menuOptionsClkCal[] PROGMEM = { clkCalMenuItem1, clkCalMenuItem2, clkCalMenuItem3, clkCalMenuItem4 };
+
+uint32_t clkcal_hz(uint8_t clk) {
+  return pgm_read_dword(&clkCalHz[clk]);
+}
+
+void clkcal_printName(uint8_t clk) {
+  switch (clk) {
+    case 0: print_Msg(F("CIC")); break;
+    case 1: print_Msg(F("EXT")); break;
+    default: print_Msg(F("CPU")); break;
+  }
+}
+
+// Returns which clock a reading belongs to (within 0.5%), or 0xFF if none
+uint8_t clkcal_classify(uint32_t hz) {
+  for (uint8_t clk = 0; clk < 3; clk++) {
+    uint32_t target = clkcal_hz(clk);
+    uint32_t window = target / 200;
+    if ((hz >= target - window) && (hz <= target + window)) {
+      return clk;
+    }
+  }
+  return 0xFF;
+}
+
+// Re-program all clock outputs with the current cal_factor
+void clkcal_apply() {
+  clockgen.set_correction(cal_factor, SI5351_PLL_INPUT_XO);
+  clockgen.set_pll(SI5351_PLL_FIXED, SI5351_PLLA);
+  clockgen.set_pll(SI5351_PLL_FIXED, SI5351_PLLB);
+  clockgen.pll_reset(SI5351_PLLA);
+  clockgen.pll_reset(SI5351_PLLB);
+  clockgen.set_freq(400000000ULL, SI5351_CLK0);
+  clockgen.set_freq(100000000ULL, SI5351_CLK1);
+  clockgen.set_freq(307200000ULL, SI5351_CLK2);
+  delay(500);
+  // Restart the counter so no gate spans the frequency change
+  FreqCount.end();
+  FreqCount.begin(1000);
+}
+
+// Non-blocking input, the serial checkButton() waits for a byte otherwise
+uint8_t clkcal_input() {
+#ifdef ENABLE_SERIAL
+  if (Serial.available() == 0) {
+    return 0;
+  }
+#endif
+  return checkButton();
+}
+
+// Is this button event a "continue" press (rotating the wheel doesn't count)
+bool clkcal_pressed(uint8_t b) {
+#if defined(ENABLE_ROTARY)
+  return (b == 3);
+#elif (defined(ENABLE_OLED) && !defined(ENABLE_BUTTON2))
+  return (b == 1);
+#else
+  return (b == 1) || (b == 3);
+#endif
+}
+
+// Wait for a press, a long hold cancels the calibration
+void clkcal_waitPress() {
+  while (1) {
+    uint8_t b = clkcal_input();
+    if (b == 4) {
+      resetArduino();
+    }
+    if (clkcal_pressed(b)) {
+      return;
+    }
+  }
+}
+
+// Shows which pins to bridge and the live reading, returns by itself once the right clock is detected
+void clkcal_waitConnection(uint8_t clk) {
+  uint32_t hz = 0;
+  bool haveReading = false;
+  bool redraw = true;
+  uint8_t good = 0;
+  uint8_t found = 0xFF;
+
+  while (1) {
+    if (FreqCount.available()) {
+      hz = FreqCount.read();
+      haveReading = true;
+      found = clkcal_classify(hz);
+      if (found == clk) {
+        good++;
+      } else {
+        good = 0;
+      }
+      redraw = true;
+    }
+
+    if (redraw) {
+#ifdef ENABLE_GLOBAL_LOG
+      dont_log = true;
+#endif
+      display_Clear();
+      println_Msg(F("Remove any cartridge"));
+      println_Msg(F("Connect a wire from"));
+      print_Msg(F("SNES pin 43 to pin "));
+      println_Msg((unsigned long)pgm_read_byte(&clkCalPins[clk]));
+      print_Msg(F("Target: "));
+      print_Msg(clkcal_hz(clk));
+      println_Msg(F("Hz"));
+      print_Msg(F("Read:   "));
+      if (haveReading) {
+        print_Msg(hz);
+        println_Msg(F("Hz"));
+      } else {
+        println_Msg(F("---"));
+      }
+      if (!haveReading) {
+        println_Msg(F("Waiting for signal"));
+      } else if (good >= 2) {
+        println_Msg(F("Connection OK!"));
+      } else if (found == clk) {
+        println_Msg(F("Checking..."));
+      } else if (found != 0xFF) {
+        print_Msg(F("Wrong pin ("));
+        clkcal_printName(found);
+        println_Msg(F(" clock)"));
+      } else if (hz < 1000) {
+        println_Msg(F("No signal"));
+      } else {
+        println_Msg(F("Unstable signal"));
+      }
+      println_Msg((good >= 2) ? F("Starting...") : F("Starts automatically"));
+      println_Msg(F("Hold to cancel"));
+      display_Update();
+#ifdef ENABLE_GLOBAL_LOG
+      dont_log = false;
+#endif
+      redraw = false;
+    }
+
+    if (good >= 2) {
+      delay(500);
+      return;
+    }
+
+    if (clkcal_input() == 4) {
+      resetArduino();
+    }
+  }
+}
+
+// Counts for 'seconds' and returns the error in ppb, false if the wire slipped
+bool clkcal_measure(uint8_t clk, uint8_t seconds, uint8_t pass, int32_t& errPpb) {
+  uint32_t target = clkcal_hz(clk);
+
+  display_Clear();
+  println_Msg(F("Auto calibration"));
+  print_Msg(F("Pass "));
+  print_Msg((unsigned long)pass);
+  print_Msg(F("/"));
+  println_Msg((unsigned long)CLKCAL_PASSES);
+  print_Msg(F("Measuring "));
+  print_Msg((unsigned long)seconds);
+  println_Msg(F("s..."));
+  println_Msg(F("Keep wire in place"));
+  println_Msg(FS(FSTRING_EMPTY));
+  draw_progressbar(0, seconds * 20);
+
+  // Throw away the gate that was running while the connection was confirmed
+  FreqCount.read();
+  while (!FreqCount.available()) {
+  }
+  if (clkcal_classify(FreqCount.read()) != clk) {
+    return false;
+  }
+
+  // Gates are back to back, so the sum of N readings equals one N second gate
+  uint64_t sum = 0;
+  for (uint8_t i = 1; i <= seconds; i++) {
+    while (!FreqCount.available()) {
+    }
+    uint32_t hz = FreqCount.read();
+    if (clkcal_classify(hz) != clk) {
+      return false;
+    }
+    sum += hz;
+    draw_progressbar(i * 20, seconds * 20);
+  }
+
+  int64_t expected = (int64_t)target * seconds;
+  int64_t diff = (int64_t)sum - expected;
+  errPpb = diff * 1000000000LL / expected;
+  return true;
+}
+
+// Measure and correct cal_factor, restarts by itself if the connection goes bad
+// A positive correction lowers the output, so a fast clock adds its error in ppb
+void clkcal_runStep(uint8_t clk, uint8_t seconds, uint8_t pass, bool waitFirst) {
+  int32_t errPpb;
+
+  while (1) {
+    if (waitFirst) {
+      clkcal_waitConnection(clk);
+    }
+    waitFirst = true;
+
+    if (!clkcal_measure(clk, seconds, pass, errPpb)) {
+      display_Clear();
+      println_Msg(F("Auto calibration"));
+      println_Msg(F("Signal lost!"));
+      println_Msg(F("Keep the wire steady,"));
+      println_Msg(F("restarting..."));
+      display_Update();
+      delay(2000);
+      continue;
+    }
+
+    int32_t new_cal = cal_factor + errPpb;
+    if ((new_cal > CLKCAL_MAX_PPB) || (new_cal < -CLKCAL_MAX_PPB)) {
+      display_Clear();
+      println_Msg(F("Auto calibration"));
+      println_Msg(F("Correction too large"));
+      println_Msg(F("Check wire,"));
+      println_Msg(F("restarting..."));
+      display_Update();
+      delay(2000);
+      continue;
+    }
+
+    cal_factor = new_cal;
+    clkcal_apply();
+    return;
+  }
+}
+
+// EXT clock test: short measurements, each one correcting what the last one left, then a longer final one
+void clkcal_auto() {
+  int32_t start_cal = cal_factor;
+
+  while (1) {
+    // The wire is already confirmed after the first pass, so later passes start right away
+    for (uint8_t pass = 1; pass <= CLKCAL_PASSES; pass++) {
+      clkcal_runStep(CLKCAL_EXT, (pass == CLKCAL_PASSES) ? CLKCAL_FINAL_SECONDS : CLKCAL_PASS_SECONDS, pass, pass == 1);
+    }
+
+    display_Clear();
+    println_Msg(F("Calibration result"));
+    print_Msg(F("Correction: "));
+    println_Msg(String(cal_factor));
+    print_Msg(F("(was "));
+    print_Msg(String(start_cal));
+    println_Msg(F(")"));
+    println_Msg(FS(FSTRING_EMPTY));
+    println_Msg(F("Press to continue"));
+    display_Update();
+    clkcal_waitPress();
+
+    convertPgm(menuOptionsClkCal, 4);
+    switch (question_box(F("Calibration done"), menuOptions, 4, 0)) {
+      case 0:
+        savetofile();
+        break;
+
+      case 1:
+        // Run the test again
+        break;
+
+      case 2:
+        clkcal_manual();
+        break;
+
+      default:
+        resetArduino();
+        break;
+    }
+  }
+}
+
 void clkcal() {
   // Adafruit Clock Generator
   // last number is the clock correction factor which is custom for each clock generator
@@ -1946,6 +2244,18 @@ void clkcal() {
   delay(500);
   FreqCount.begin(1000);
 
+  convertPgm(menuOptionsClkCalMode, 2);
+  if (question_box(F("Calibrate Clock"), menuOptions, 2, 0) == 0) {
+    clkcal_auto();
+  } else {
+    clkcal_manual();
+  }
+}
+
+// Manual adjustment, starts from the current cal_factor
+void clkcal_manual() {
+  old_cal = cal_factor;
+
   while (1) {
     if (old_cal != cal_factor) {
 #ifdef ENABLE_GLOBAL_LOG
@@ -1957,16 +2267,8 @@ void clkcal() {
 #ifdef ENABLE_GLOBAL_LOG
       dont_log = false;
 #endif
-      clockgen.set_correction(cal_factor, SI5351_PLL_INPUT_XO);
-      clockgen.set_pll(SI5351_PLL_FIXED, SI5351_PLLA);
-      clockgen.set_pll(SI5351_PLL_FIXED, SI5351_PLLB);
-      clockgen.pll_reset(SI5351_PLLA);
-      clockgen.pll_reset(SI5351_PLLB);
-      clockgen.set_freq(400000000ULL, SI5351_CLK0);
-      clockgen.set_freq(100000000ULL, SI5351_CLK1);
-      clockgen.set_freq(307200000ULL, SI5351_CLK2);
+      clkcal_apply();
       old_cal = cal_factor;
-      delay(500);
     } else {
       clockgen.update_status();
       while (clockgen.dev_status.SYS_INIT == 1) {
