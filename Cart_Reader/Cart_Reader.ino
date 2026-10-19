@@ -2665,6 +2665,13 @@ void setColor_RGB(byte r, byte g, byte b) {
   if (g >= 100) g = 100;
   if (b >= 100) b = 100;
 
+#if defined(ENABLE_ROTARY_NEW_OSCR)
+  // New OSCR display has its Neopixel chain reversed: backlight is the last LED
+  const uint8_t bgPixel = 2, statusPixel1 = 1, statusPixel2 = 0;
+#else
+  const uint8_t bgPixel = 0, statusPixel1 = 1, statusPixel2 = 2;
+#endif
+
   pixels.clear();
 
 #if defined(ENABLE_CONFIG)
@@ -2675,15 +2682,15 @@ void setColor_RGB(byte r, byte g, byte b) {
     uint8_t lcdGreen = configGetLong(F("lcd.green"));
     uint8_t lcdBlue = configGetLong(F("lcd.blue"));
 
-    pixels.setPixelColor(0, pixels.Color(lcdGreen, lcdRed, lcdBlue));
+    pixels.setPixelColor(bgPixel, pixels.Color(lcdGreen, lcdRed, lcdBlue));
   } else {
-    pixels.setPixelColor(0, pixels.Color(OPTION_LCD_BG_COLOR));
+    pixels.setPixelColor(bgPixel, pixels.Color(OPTION_LCD_BG_COLOR));
   }
 #else  /* !ENABLE_CONFIG */
-  pixels.setPixelColor(0, pixels.Color(OPTION_LCD_BG_COLOR));
+  pixels.setPixelColor(bgPixel, pixels.Color(OPTION_LCD_BG_COLOR));
 #endif /* ENABLE_CONFIG */
-  pixels.setPixelColor(1, pixels.Color(g, r, b));
-  pixels.setPixelColor(2, pixels.Color(g, r, b));
+  pixels.setPixelColor(statusPixel1, pixels.Color(g, r, b));
+  pixels.setPixelColor(statusPixel2, pixels.Color(g, r, b));
   pixels.show();
 #elif defined(ENABLE_CA_LED)
   // Set color of analog 4 Pin common anode RGB LED
