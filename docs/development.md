@@ -1,24 +1,9 @@
-## This Arduino sketch is licensed under the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3)    
+# Development Notes
 
-### This means that you are free to:    
-- use, modify and distribute this software, even commercially    
-
-### Under the following terms:    
-- state changes   
-- disclose source   
-- same license   
-
-### Limitations:
-- Liability   
-- Warranty   
-
-More details: https://www.gnu.org/licenses/gpl-3.0.en.html    
-
-## 
 
 Every submodule has it's own setup_XX() function that configures the needed pins and a submenu that lets you choose what you want to do. 
 The code directly addresses the pins via the DDR, PIN and PORT registers.   
-Please also refer to the [pinout Open Office sheet](https://github.com/sanni/cartreader/blob/master/pinout.ods).    
+Please also refer to the [pinout table](pinout.md).    
 ```
 void setup_N64_Controller() {  
   // Output a low signal  
@@ -61,19 +46,20 @@ void print_Msg(long unsigned int message) {
 }
 ```
 
-Before uploading the code to your Arduino you need to select your hardware version in Cart_Reader.ino        
+Before uploading the code to your Arduino you need to select your hardware version in `Cart_Reader/Config.h`        
 ```
-//******************************************
-// !!! CHOOSE HARDWARE VERSION !!!
-//******************************************
-// Remove // in front of the line with your hardware version
-// #define HW5
-// #define HW4
-#define HW3
-// #define HW2
-// #define HW1
-// #define SERIAL_MONITOR
+/*==== HARDWARE VERSION ===========================================*/
 
+/*
+    Choose your hardware version:
+*/
+
+//#define HW5
+//#define HW4
+//#define HW3
+//#define HW2
+//#define HW1
+//#define SERIAL_MONITOR
 ```
 
 For more info please have a look at [this wiki article](https://github.com/sanni/cartreader/wiki/How-to-flash-the-Arduino).   

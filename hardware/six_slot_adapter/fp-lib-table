@@ -1,3 +1,0 @@
-(fp_lib_table
-  (lib (name "!OSCR")(type "KiCad")(uri "${KIPRJMOD}/../footprints/!OSCR.pretty")(options "")(descr "OSCR Footprints"))
-)

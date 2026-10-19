@@ -84,7 +84,16 @@ Happy making. 🔧🔨😊
 - Vtech V.Smile (Baby/V.Motion)
 - CPS3
 
+#### Repository Layout:
+- [Cart_Reader](Cart_Reader) - the Arduino sketch (open `Cart_Reader.ino`, select your hardware version in `Config.h`)
+- [docs](docs) - developer documentation: [pinout table](docs/pinout.md) and [development notes](docs/development.md)
+
+#### Related Repositories:
+- Firmware (this repository): https://github.com/oscrusergroup/firmware
+- Hardware (PCBs, adapters, 3D models): https://github.com/oscrusergroup/hardware
+- SD card files (game databases): https://github.com/oscrusergroup/sd-db
+
 #### Open Source Licenses:
-- Software(everything in Cart_Reader folder) = GPL v3
-- Hardware(everything in hardware folder) = CC BY 4.0
+- Software(everything in this repository) = GPL v3
+- Hardware(everything in the [hardware repository](https://github.com/oscrusergroup/hardware)) = CC BY 4.0
 - Documentation(everything in the Wiki) = CC0 1.0

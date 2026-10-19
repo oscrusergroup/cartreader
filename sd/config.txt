@@ -1,6 +1,0 @@
-oscr.logging=1
-lcd.confColor=0
-lcd.red=0
-lcd.green=100
-lcd.blue=0
-md.saveType=0
