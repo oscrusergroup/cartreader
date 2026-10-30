@@ -1,15 +1,8 @@
-<br>    
-<br>    
-<br>   
+This fork picks up where the [original OSCR repo](https://github.com/sanni/cartreader/) left off after being archived.
 <br>
-We have moved, please visit us at https://github.com/oscartreader 🚀
-<br>    
-<br>    
-<br>   
+It allows the project to continue to be maintained and improved by the community.
 <br>
-<br>    
-<br>    
-<br>   
+<br>
 
 ![image](https://dl.dropboxusercontent.com/s/ioc5oewzcuvs8nz/logos.png?dl=1)
 

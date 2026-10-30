@@ -1763,9 +1763,9 @@ void selfTest() {
 // Info Screen
 void aboutScreen() {
   display_Clear();
-  println_Msg(F("Cartridge Reader"));
-  println_Msg(F("github.com/sanni"));
-  print_Msg(F("2025 FW "));
+  println_Msg(F("Open Source Cartridge Reader"));
+  println_Msg(F("github.com/oscrusergroup"));
+  print_Msg(F("Firmware v"));
   println_Msg(FS(FSTRING_VERSION));
   println_Msg(FS(FSTRING_EMPTY));
   println_Msg(FS(FSTRING_EMPTY));
