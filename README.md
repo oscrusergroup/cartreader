@@ -1,8 +1,8 @@
 This fork picks up where the [original OSCR repo](https://github.com/sanni/cartreader/) left off after being archived.
-<br>
+
 It allows the project to continue to be maintained and improved by the community.
-<br>
-<br>
+
+
 
 ![image](https://dl.dropboxusercontent.com/s/ioc5oewzcuvs8nz/logos.png?dl=1)
 
@@ -10,9 +10,7 @@ It allows the project to continue to be maintained and improved by the community
 This project represents a community-driven effort to provide an easy to build and easy to modify cartridge dumper.
 Its main purpose is to dump a video game's ROM and save file to an SD card without the need of a PC.
 
-For any questions you can use the [Discussions](https://github.com/sanni/cartreader/discussions) and/or [Issues](https://github.com/sanni/cartreader/issues) section here on GitHub, visit the accompanying thread in the [Arduino Forum](http://forum.arduino.cc/index.php?topic=158974.9001) or check out our [community discord server](https://discord.gg/YVxv7BnzXt), where you can reach most of the devs directly.
-
-Also be sure to check the guides in the [Wiki](https://github.com/sanni/cartreader/wiki) too.
+For any questions you can visit our [community discord server](https://discord.gg/FJHpFwW3Vf), where you can reach most of the devs directly. You can also add an [Issue](https://github.com/oscrusergroup/firmware/issues) section here on GitHub.
 
 Happy making. 🔧🔨😊
 
@@ -76,10 +74,6 @@ Happy making. 🔧🔨😊
 - TRS-80 Color Computer
 - Vtech V.Smile (Baby/V.Motion)
 - CPS3
-
-#### Repository Layout:
-- [Cart_Reader](Cart_Reader) - the Arduino sketch (open `Cart_Reader.ino`, select your hardware version in `Config.h`)
-- [docs](docs) - developer documentation: [pinout table](docs/pinout.md) and [development notes](docs/development.md)
 
 #### Related Repositories:
 - Firmware (this repository): https://github.com/oscrusergroup/firmware
