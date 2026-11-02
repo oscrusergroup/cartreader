@@ -175,7 +175,9 @@ void gbaMenu() {
           } else {
             eraseFLASH_GBA();
             if (strcmp("PEAJ", cartID) == 0) {  // Japanese e-reader
+#ifdef ENABLE_GLOBAL_LOG
               println_Log(F("Skipping last 128 bytes"));
+#endif
               if (blankcheckFLASH_GBA(65408)) {
                 writeFLASH_GBA(1, 65408, 0, 0);
                 verifyFLASH_GBA(65408, 0);
@@ -211,7 +213,9 @@ void gbaMenu() {
             setROM_GBA();
             // Card e-Reader+ does not allow access to last 128 bytes of a bank
             if (strcmp("PSAE", cartID) == 0 || strcmp("PSAJ", cartID) == 0) { // Japanese e-reader+, USA e-reader
+#ifdef ENABLE_GLOBAL_LOG
               println_Log(F("Skipping last 128 bytes"));
+#endif
               if (!blankcheckFLASH_GBA(65408))
                 break;
               writeFLASH_GBA(!bank, 65408, bank ? 65536 : 0, 0);
